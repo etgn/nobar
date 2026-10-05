@@ -214,8 +214,23 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
   <script>
-    // GANTI PASSWORD DI SINI (Default: 12345)
     const SECRET_PASSWORD = "123";
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000; // 24 Jam dalam milidetik
+
+    // Cek apakah sudah pernah login dalam 24 jam terakhir
+    function checkLoginStatus() {
+      const lastLogin = localStorage.getItem('nobar_login_time');
+      const overlay = document.getElementById('login-overlay');
+      
+      if (lastLogin) {
+        const timePassed = Date.now() - parseInt(lastLogin, 10);
+        if (timePassed < ONE_DAY_MS) {
+          overlay.style.display = 'none'; // Sembunyikan popup login jika belum 24 jam
+          return;
+        }
+      }
+      overlay.style.display = 'flex'; // Tampilkan jika belum login / sudah kadaluwarsa
+    }
 
     function checkPassword() {
       const input = document.getElementById('password-input').value;
@@ -223,11 +238,15 @@
       const overlay = document.getElementById('login-overlay');
 
       if (input === SECRET_PASSWORD) {
+        localStorage.setItem('nobar_login_time', Date.now().toString());
         overlay.style.display = 'none';
       } else {
         errorMsg.style.display = 'block';
       }
     }
+
+    // Jalankan pengecekan status saat halaman dimuat
+    checkLoginStatus();
 
     // Password input press Enter listener
     document.getElementById('password-input').addEventListener('keydown', function(e) {
