@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nobar YouTube Karo Ana</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 { color: #f43f5e; margin-bottom: 8px; }
+    p { color: #94a3b8; font-size: 14px; margin-top: 0; text-align: center; }
+
+    /* Modal / Popup Login */
+    #login-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #0f172a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .login-card {
+      background-color: #1e293b;
+      padding: 24px;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      text-align: center;
+      width: 90%;
+      max-width: 320px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .login-card input {
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .login-card button { width: 100%; }
+
+    .search-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 640px;
+      margin-bottom: 15px;
+    }
+    .search-container {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+    input {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background-color: #1e293b;
+      color: #fff;
+      outline: none;
+    }
+    input:focus { border-color: #f43f5e; }
+    button {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      background-color: #f43f5e;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background-color: #e11d48; }
+
+    #suggestions-box {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      margin-top: 5px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 100;
+      display: none;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    }
+    .suggestion-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #cbd5e1;
+      border-bottom: 1px solid #334155;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover {
+      background-color: #334155;
+      color: #fff;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .btn-skip { background-color: #334155; }
+    .btn-skip:hover { background-color: #475569; }
+
+    #player-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 640px;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    #player { width: 100%; height: 100%; }
+
+    #search-results {
+      width: 100%;
+      max-width: 640px;
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 350px;
+      overflow-y: auto;
+    }
+    .video-item {
+      display: flex;
+      gap: 12px;
+      background-color: #1e293b;
+      padding: 10px;
+      border-radius: 8px;
+      align-items: center;
+    }
+    .video-item img {
+      width: 100px;
+      height: 56px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+    .video-info {
+      flex: 1;
+      overflow: hidden;
+    }
+    .video-title {
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .video-author {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .btn-play {
+      background-color: #10b981;
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    .btn-play:hover { background-color: #059669; }
+  </style>
+</head>
+<body>
+
+  <!-- Layar Login Password -->
+  <div id="login-overlay">
+    <div class="login-card">
+      <h2 style="margin-top:0; color:#f43f5e;">Masukan Password</h2>
+      <input type="password" id="password-input" placeholder="Sandi..." />
+      <button onclick="checkPassword()">Masuk</button>
+      <p id="error-msg" style="color:#f43f5e; margin-top:10px; display:none;">Password salah!</p>
+    </div>
+  </div>
+
+  <h1>Nobar YouTube 🎬</h1>
+  <p>Ana Bubub Hehe.</p>
+
+  <div class="search-wrapper">
+    <div class="search-container">
+      <input type="text" id="search-input" placeholder="Ketik judul video..." oninput="fetchSuggestions()" autocomplete="off">
+      <button onclick="handleSearchOrLink()">Cari / Putar</button>
+    </div>
+    <div id="suggestions-box"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-skip" onclick="skipTime(-10)">⏪ -10 Detik</button>
+    <button class="btn-skip" onclick="skipTime(10)">⏩ +10 Detik</button>
+  </div>
+
+  <div id="player-wrapper">
+    <div id="player"></div>
+  </div>
+
+  <div id="search-results"></div>
+
+  <!-- Firebase App & Database SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script>
+    // GANTI PASSWORD DI SINI (Default: 12345)
+    const SECRET_PASSWORD = "123";
+
+    function checkPassword() {
+      const input = document.getElementById('password-input').value;
+      const errorMsg = document.getElementById('error-msg');
+      const overlay = document.getElementById('login-overlay');
+
+      if (input === SECRET_PASSWORD) {
+        overlay.style.display = 'none';
+      } else {
+        errorMsg.style.display = 'block';
+      }
+    }
+
+    // Password input press Enter listener
+    document.getElementById('password-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') checkPassword();
+    });
+
+    // Konfigurasi Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAB6i6rU3C7qJsk4L6uoQq2aXGh-T3vMeI",
+      authDomain: "nobar-yt.firebaseapp.com",
+      databaseURL: "https://nobar-yt-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "nobar-yt",
+      storageBucket: "nobar-yt.firebasestorage.app",
+      messagingSenderId: "609835429235",
+      appId: "1:609835429235:web:72f68ebc03196da2442906",
+      measurementId: "G-ENGC67KXVN"
+    };
+
+    // @ts-ignore
+    firebase.initializeApp(firebaseConfig);
+    // @ts-ignore
+    const db = firebase.database().ref("nobar_room");
+
+    let player;
+    let isRemoteChange = false;
+    let lastTime = 0;
+    /** @type {any} */
+    let checkSeekInterval;
+    /** @type {any} */
+    let suggestTimeout;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const inputEl = document.getElementById('search-input');
+      if (inputEl) {
+        inputEl.addEventListener('keydown', function(evt) {
+          const e = /** @type {KeyboardEvent} */ (evt);
+          if (e.key === 'Enter') {
+            handleSearchOrLink();
+          }
+        });
+      }
+    });
+
+    // Load YouTube API
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    if (firstScriptTag && firstScriptTag.parentNode) {
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    }
+
+    // @ts-ignore
+    window.onYouTubeIframeAPIReady = function() {
+      // @ts-ignore
+      player = new YT.Player('player', {
+        height: '360',
+        width: '640',
+        videoId: 'dQw4w9WgXcQ',
+        events: {
+          'onStateChange': onPlayerStateChange
+        }
+      });
+      listenToDatabase();
+    };
+
+    /**
+     * @param {any} evt
+     */
+    function onPlayerStateChange(evt) {
+      if (isRemoteChange) return;
+
+      const currentTime = player.getCurrentTime();
+
+      // @ts-ignore
+      if (evt.data === YT.PlayerState.PLAYING) {
+        db.set({ action: 'play', time: currentTime, videoId: player.getVideoData().video_id, timestamp: Date.now() });
+        startSeekCheck();
+      // @ts-ignore
+      } else if (evt.data === YT.PlayerState.PAUSED) {
+        db.set({ action: 'pause', time: currentTime, videoId: player.getVideoData().video_id, timestamp: Date.now() });
+        clearInterval(checkSeekInterval);
+      }
+    }
+
+    function startSeekCheck() {
+      clearInterval(checkSeekInterval);
+      checkSeekInterval = setInterval(() => {
+        if (!player || isRemoteChange) return;
+        const currentTime = player.getCurrentTime();
+        
+        // @ts-ignore
+        if (Math.abs(currentTime - lastTime) > 2.5 && player.getPlayerState() === YT.PlayerState.PLAYING) {
+          db.set({ action: 'seek', time: currentTime, videoId: player.getVideoData().video_id, timestamp: Date.now() });
+        }
+        lastTime = currentTime;
+      }, 1000);
+    }
+
+    /**
+     * @param {number} seconds
+     */
+    function skipTime(seconds) {
+      if (!player) return;
+      const newTime = Math.max(0, player.getCurrentTime() + seconds);
+      player.seekTo(newTime, true);
+      db.set({
+        action: 'seek',
+        time: newTime,
+        videoId: player.getVideoData().video_id,
+        timestamp: Date.now()
+      });
+    }
+
+    function fetchSuggestions() {
+      clearTimeout(suggestTimeout);
+      const inputEl = /** @type {HTMLInputElement|null} */ (document.getElementById('search-input'));
+      const query = inputEl ? inputEl.value.trim() : '';
+      const suggestionsBox = document.getElementById('suggestions-box');
+
+      if (!suggestionsBox) return;
+
+      if (!query || extractVideoID(query) !== query) {
+        suggestionsBox.style.display = 'none';
+        return;
+      }
+
+      suggestTimeout = setTimeout(() => {
+        /**
+         * @param {any} data
+         */
+        // @ts-ignore
+        window.getYouTubeSuggestions = function(data) {
+          const suggestions = data[1] || [];
+          if (suggestions.length === 0) {
+            suggestionsBox.style.display = 'none';
+            return;
+          }
+
+          suggestionsBox.innerHTML = '';
+          suggestions.slice(0, 6).forEach(
+            /** @param {any} item */
+            function(item) {
+              const div = document.createElement('div');
+              div.className = 'suggestion-item';
+              div.innerText = item[0];
+              div.onclick = () => {
+                if (inputEl) inputEl.value = item[0];
+                suggestionsBox.style.display = 'none';
+                searchYouTube(item[0]);
+              };
+              suggestionsBox.appendChild(div);
+            }
+          );
+          suggestionsBox.style.display = 'block';
+        };
+
+        const script = document.createElement('script');
+        script.src = `https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&q=${encodeURIComponent(query)}&jsonp=getYouTubeSuggestions`;
+        document.body.appendChild(script);
+        script.onload = () => script.remove();
+      }, 200);
+    }
+
+    /**
+     * @param {MouseEvent} evt
+     */
+    document.addEventListener('click', (evt) => {
+      const target = /** @type {HTMLElement|null} */ (evt.target);
+      const suggestionsBox = document.getElementById('suggestions-box');
+      if (suggestionsBox && target && !target.closest('.search-wrapper')) {
+        suggestionsBox.style.display = 'none';
+      }
+    });
+
+    function handleSearchOrLink() {
+      const suggestionsBox = document.getElementById('suggestions-box');
+      if (suggestionsBox) suggestionsBox.style.display = 'none';
+
+      const inputEl = /** @type {HTMLInputElement|null} */ (document.getElementById('search-input'));
+      const input = inputEl ? inputEl.value.trim() : '';
+      if (!input) return;
+
+      const videoId = extractVideoID(input);
+      if (videoId && videoId !== input) {
+        playVideoDirectly(videoId);
+      } else {
+        searchYouTube(input);
+      }
+    }
+
+    /**
+     * @param {string} videoId
+     */
+    function playVideoDirectly(videoId) {
+      db.set({ action: 'change', time: 0, videoId: videoId, timestamp: Date.now() });
+      const resultsContainer = document.getElementById('search-results');
+      if (resultsContainer) resultsContainer.innerHTML = '';
+    }
+
+    /**
+     * @param {string} url
+     */
+    function extractVideoID(url) {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : url;
+    }
+
+    /**
+     * @param {string} query
+     */
+    async function searchYouTube(query) {
+      const resultsContainer = document.getElementById('search-results');
+      if (!resultsContainer) return;
+
+      resultsContainer.innerHTML = '<p style="text-align:center;">Mencari video...</p>';
+
+      const instances = [
+        'https://vid.puffyan.us',
+        'https://invidious.nerdvpn.de',
+        'https://invidious.drgns.space'
+      ];
+
+      let data = null;
+
+      for (const instance of instances) {
+        try {
+          const response = await fetch(`${instance}/api/v1/search?q=${encodeURIComponent(query)}&type=video`);
+          if (response.ok) {
+            data = await response.json();
+            break;
+          }
+        } catch (e) {
+          console.warn(`Gagal mengambil data dari ${instance}, mencoba server alternatif...`);
+        }
+      }
+
+      resultsContainer.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        resultsContainer.innerHTML = '<p style="text-align:center; color:#f43f5e;">Gagal memuat pencarian atau video tidak ditemukan. Coba tempel link YouTube secara langsung.</p>';
+        return;
+      }
+
+      data.slice(0, 5).forEach(
+        /** @param {any} video */
+        function(video) {
+          const item = document.createElement('div');
+          item.className = 'video-item';
+          
+          const thumbUrl = (video.videoThumbnails && video.videoThumbnails.length > 0) 
+            ? video.videoThumbnails[0].url 
+            : `https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`;
+
+          item.innerHTML = `
+            <img src="${thumbUrl}" alt="thumb">
+            <div class="video-info">
+              <div class="video-title">${video.title}</div>
+              <div class="video-author">${video.author}</div>
+            </div>
+            <button class="btn-play" onclick="playVideoDirectly('${video.videoId}')">Nonton</button>
+          `;
+          resultsContainer.appendChild(item);
+        }
+      );
+    }
+
+    function listenToDatabase() {
+      db.on('value', 
+        /** @param {any} snapshot */
+        function(snapshot) {
+          const data = snapshot.val();
+          if (!data || !player) return;
+
+          isRemoteChange = true;
+
+          if (data.videoId && player.getVideoData().video_id !== data.videoId) {
+            player.loadVideoById(data.videoId, data.time);
+          }
+
+          if (Math.abs(player.getCurrentTime() - data.time) > 1.5) {
+            player.seekTo(data.time, true);
+          }
+
+          if (data.action === 'play') {
+            player.playVideo();
+          } else if (data.action === 'pause') {
+            player.pauseVideo();
+          }
+
+          setTimeout(() => { isRemoteChange = false; }, 800);
+        }
+      );
+    }
+  </script>
+</body>
+</html>
